@@ -1,0 +1,8 @@
+[project]
+name = "hyperlynx"
+version = "0.1.0"
+description = "Work orders and project management"
+requires-python = ">=3.14"
+dependencies = [
+    "django>=5.2.8",
+]
