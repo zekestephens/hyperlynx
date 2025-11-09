@@ -46,11 +46,15 @@
         );
 
         return html`
+            <!-- Header -->
+
             <div>
-                <!-- Header -->
-                <div class="page-header d-flex justify-content-between align-items-center p-3 mb-0 bg-purple sticky-top w-100">
+
+                <div class="page-header d-flex justify-content-between align-items-center p-3 mb-0 bg-purple sticky-top w-100" id="top-bar">
+                    <!-- Left: Logo -->
                     <div class="bg-logo"></div>
 
+                    <!-- Right: Link to All Tickets -->
                     <a href="{% url 'dashboard' %}" class="btn btn-outline-light">
                         My Tickets
                     </a>
@@ -76,6 +80,7 @@
                             <div key=${index} class="ticket-item card shadow-sm mb-3">
                                 <div class="card-body">
                                     <h5 class="card-title">${t.title}</h5>
+                                    <a href="https://jira.hyperlynx.us/browse/${t.key}">View ${t.key} in Jira</a>
                                     <p class="card-text text-muted">${t.date}</p>
                                 </div>
                             </div>

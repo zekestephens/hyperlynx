@@ -8,6 +8,5 @@ urlpatterns = [
     path('api/chat/', views.chat_api, name='gemini-chat'),
 
     path('all-tickets/', views.all_tickets, name="all_tickets"),
-    path('get-all-tickets/', views.getUserTickets, name="getalltickets"),
     path('dashboard/', views.dashboard, name="dashboard")
 ]

@@ -14,65 +14,82 @@ from tickets.jira import JiraClient
 
 load_dotenv()
 
+
 # Create your views here.
 def index(request):
     return render(request, "index.html")
 
+
 def all_tickets(request):
-
-
     j = JiraClient(base_url=os.getenv("JIRA_URL"), token=os.getenv("JIRA_TOKEN"))
 
-    issues =  [
+    issues = [
         {
             'id': issue['id'],
+            'key': issue['key'],
             'title': issue['fields']['summary'],
             'date': issue['fields']['created'],
             'priority': issue['fields']['priority']['name']
         } for issue in j.get_all_issues()
     ]
 
-    return render(request, "all_tickets.html", context=dict(issues=mark_safe(issues))) #testing dashboard
+    return render(request, "all_tickets.html", context=dict(issues=mark_safe(issues)))  # testing dashboard
+
 
 # def dashboard(request):
 #     return render(request, "dashboard.html") #testing dashboard
 
 @login_required
 def dashboard(request):
-    # Example: determine role based on user (you can replace this with your own logic)
-    user_role = "engineer"
-    # if request.user.groups.filter(name="DataTechnician").exists():
-    #     user_role = "data_technician"
-
+    # Get Jira group members
     j = JiraClient(base_url=os.getenv("JIRA_URL"), token=os.getenv("JIRA_TOKEN"))
+    engineers = j.get_group_members("Engineers")
+    technicians = j.get_group_members("Technicians")
 
-    issues =  [
+    # Match Jira user by email
+    user = request.user.jira_username
+
+    # Determine role based on membership
+    if any(member.get("name") == user for member in engineers):
+        user_role = "engineer"
+    elif any(member.get("name") == user for member in technicians):
+        user_role = "data_technician"
+    else:
+        # Default fallback
+        user_role = "data_technician"
+
+
+
+
+    user_issues = [
         {
             'id': issue['id'],
-            'title': issue['fields']['description'],
-            'date': issue['fields']['created'],
-            'priority': issue['fields']['priority']['name']
-        } for issue in j.get_all_issues()
-    ]
-
-    return render(request, "dashboard.html", {"user_role": user_role, "issues": mark_safe(json_dump(issues))})
-#* Jira Get
-def getUserTickets(request, username: str):
-    j = JiraClient(base_url=os.getenv("JIRA_URL"), token=os.getenv("JIRA_TOKEN"))
-    issues =  [
-        {
-            'id': issue['id'],
+            'help': "we",
+            'key': issue['key'],
             'title': issue['fields']['summary'],
             'date': issue['fields']['created'],
             'priority': issue['fields']['priority']['name']
         } for issue in j.get_user_issues(username=request.user.jira_username)
     ]
+    sug_issues = [
+        {
+            'id': issue['id'],
+            'help': "we",
+            'key': issue['key'],
+            'title': issue['fields']['summary'],
+            'date': issue['fields']['created'],
+            'priority': issue['fields']['priority']['name']
+        } for issue in j.get_unassigned_issues(project="DCM")
+    ]
 
-    return render(request, "all_tickets.html", context=dict(issues=mark_safe(issues))) #testing dashboard
+    return render(request, "dashboard.html", {
+        "sug_iss": mark_safe(json_dump(sug_issues)),
+        "user_role": user_role,
+        "issues": mark_safe(json_dump(user_issues))
+    })
 
 
-
-#* GEMINI!!!!!!!=====================================================================
+# * GEMINI!!!!!!!=====================================================================
 # Imports*****
 import base64
 
@@ -85,7 +102,9 @@ from dataclasses import dataclass
 from typing import List
 from typing import Dict, Any
 import json
-#* Checks to see if string returned is JSON.
+
+
+# * Checks to see if string returned is JSON.
 #  IF IS JSON:          return true
 #                       return false
 def isJSON(string_to_validate):
@@ -102,7 +121,7 @@ def isJSON(string_to_validate):
     def name_string(self):
         return self.value
 
-    def self_to_JSON(self)-> Dict[str, Any]:
+    def self_to_JSON(self) -> Dict[str, Any]:
         return {
             "fields": {
                 "project": {
@@ -120,6 +139,8 @@ def isJSON(string_to_validate):
                 }
             }
         }
+
+
 def pass_new_ticket(
         summary: str,
         description: str,
@@ -148,7 +169,8 @@ def pass_new_ticket(
 
     return response
 
-client=genai.Client(api_key=os.getenv('GEMINI_API_KEY'))
+
+client = genai.Client(api_key=os.getenv('GEMINI_API_KEY'))
 TICKET_MASTER_PROMPT = """
 You are the ticket master. Engineers come to you to make tickets about failures happening within the datacenter. You are looking for the following fields:
 LOCATION (Must give a: floor, hall, pod, aisle, and rack, must have all 5 with no other locations)
@@ -177,13 +199,12 @@ def chat_api(request):
             user_message = data.get('message', '')
             history = data.get('history', '')
             chat = client.chats.create(model="gemini-2.5-flash",
-                                       history= history,
+                                       history=history,
                                        config=types.GenerateContentConfig(
                                            system_instruction=TICKET_MASTER_PROMPT,
                                            tools=[pass_new_ticket]
                                        )
                                        )
-
 
             if not user_message:
                 return JsonResponse({'error': 'Message cannot be empty'}, status=400)
@@ -191,8 +212,7 @@ def chat_api(request):
             response = chat.send_message(user_message)
             if response.function_calls:
                 print("It beckons")
-                return JsonResponse({'done':True,'reply': response.text})
-
+                return JsonResponse({'done': True, 'reply': response.text})
 
             history.append({
                 "role": "user",
@@ -202,10 +222,9 @@ def chat_api(request):
                 "role": "user",
                 "parts": [{"text": user_message}]
             })
-
 
             # 3. Return AI response
-            return JsonResponse({'done':True, 'reply': response.text})
+            return JsonResponse({'done': True, 'reply': response.text})
 
         except Exception as e:
             print(f"Gemini API Error: {e}")

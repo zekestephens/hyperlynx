@@ -50,6 +50,14 @@ body {
     font-family: "Work Sans", sans-serif;
 }
 
+.sug div div{
+    background-color: #AAA;
+}
+
+
+.card-body{
+    background-color: #AAA;
+}
 
 .space-span{
     padding: 5px;

@@ -35,6 +35,61 @@
 
     const html = htm.bind(createElement);
 
+    function AllUserTickets() {
+        const [tickets, setTickets] = useState({{ issues }});
+        const [query, setQuery] = useState("");
+
+
+        const filtered = tickets.filter(t =>
+            t.title.toLowerCase().includes(query.toLowerCase())
+        );
+
+
+        return html`
+            <!-- Ticket List -->
+            <div class="ticket-list">
+                ${
+                        filtered.map((t, index) => html`
+                            <div key=${index} class="ticket-item card shadow-sm mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">${t.title}</h5>
+                                    <a href="https://jira.hyperlynx.us/browse/${t.key}">View ${t.key} in Jira</a>
+                                    <p class="card-text text-muted">${t.date}</p>
+                                </div>
+                            </div>
+                        `)
+                }
+            </div>
+        `;
+    }
+    function sugTickets() {
+        const [tickets, setTickets] = useState({{ sug_iss }});
+        const [query, setQuery] = useState("");
+
+
+        const filtered = tickets.filter(t =>
+            t.title.toLowerCase().includes(query.toLowerCase())
+        );
+
+
+        return html`
+            <!-- Ticket List -->
+            <div class="ticket-list">
+                ${
+            filtered.map((t, index) => html`
+                            <div key=${index} class="ticket-item card shadow-sm mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">${t.title}</h5>
+                                    <a href="https://jira.hyperlynx.us/browse/${t.key}">View ${t.key} in Jira</a>
+                                    <p class="card-text text-muted">${t.date}</p>
+                                </div>
+                            </div>
+                        `)
+        }
+            </div>
+        `;
+    }
+
     function Chatbot({ messages=[], isLoading }) {
         return html`
             <div class="chatbot-container">
@@ -187,7 +242,7 @@
                 `}
 
                 ${isDataTech && html`
-                    <div class="page-header d-flex justify-content-between align-items-center p-3 mb-0 bg-purple sticky-top w-100" id="top-bar">
+                    <div class="page-header d-flex justify-content-between align-items-center p-3 mb-0 bg-blue sticky-top w-100" id="top-bar">
                         <!-- Left: Logo -->
                         <div class="bg-logo"></div>
 
@@ -225,28 +280,15 @@
                     </div>
                 </div>
                 <div class="tasks-container col-9 mb-2 justify-content-centerjustify-content-center">
-                    ${tickets.map(t => html`
-                    <div class=" mb-2 justify-content-centerjustify-content-center">
-                        <div class="card shadow-sm">
-                            <div class="card-body">
-                                <h5 class="card-title">${t.title}</h5>
-                                <p class="card-text"><small>Created: ${t.date}</small></p>
-                            </div>
-                        </div>
-                    </div>
-                `)}
+                    <${AllUserTickets}/>
                 </div>
 
 
             </div>
             ${isDataTech && html`
-                <div class="card p-3 shadow-sm">
-                    <h4>Suggested Tasks</h4>
-                    <ul>
-                        <li>Check network latency logs in Dallas DC</li>
-                        <li>Verify power efficiency in Houston DC</li>
-                        <li>Update rack maintenance schedule</li>
-                    </ul>
+
+                <div class="tasks-container col-9 mb-2 justify-content-centerjustify-content-center">
+                    <${sugTickets}/>
                 </div>
             `}
             </div>

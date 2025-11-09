@@ -331,6 +331,50 @@ class JiraClient:
             json={"fields": fields}
         )
 
+    def get_group_members(self, group_name: str) -> List[Dict[str, Any]]:
+        """Get all members of a group."""
+        response = self._request(
+            "GET",
+            "/rest/api/2/group/member",
+            params={"groupname": group_name}
+        )
+        return response.json().get('values', [])
+
+    def get_unassigned_issues(
+            self,
+            project: Optional[str] = None,
+            max_results: int = 2
+    ) -> List[Dict[str, Any]]:
+        """
+        Get unassigned issues sorted by priority (highest first).
+
+        Args:
+            project: Optional project key filter (e.g., "DCM")
+            max_results: Number of issues to return (default: 2)
+
+        Returns:
+            List of unassigned issues sorted by priority
+
+        Example:
+            # Get top 2 unassigned issues across all projects
+            issues = client.get_unassigned_issues()
+
+            # Get top 2 unassigned issues in DCM project
+            issues = client.get_unassigned_issues(project="DCM")
+
+            for issue in issues:
+                print(f"{issue['key']}: {issue['fields']['summary']}")
+                print(f"Priority: {issue['fields']['priority']['name']}")
+        """
+        jql = "assignee is EMPTY"
+
+        if project:
+            jql = f"project = {project} AND {jql}"
+
+        jql += " ORDER BY priority DESC"
+
+        return self.search_issues(jql, max_results=max_results)
+
     def is_issue_done(self, issue_key: str) -> bool:
         """
         Check if an issue is in a "Done" status.
