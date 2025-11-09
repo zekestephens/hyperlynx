@@ -1,0 +1,65 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>All Tickets</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'tickets/css/styles.css' %}">
+</head>
+<body>
+<div id="root"></div>
+
+<script type="module">
+    import { useState, createElement } from 'https://esm.sh/react';
+    import { createRoot } from 'https://esm.sh/react-dom/client';
+    import htm from 'https://unpkg.com/htm?module';
+    const html = htm.bind(createElement);
+
+    function AllTickets() {
+        const [tickets] = useState([
+            { id: 1, title: "Server overload in Dallas DC", date: "2025-11-08" },
+            { id: 2, title: "Cooling system check Houston DC", date: "2025-11-07" },
+            { id: 3, title: "Firewall update Austin DC", date: "2025-11-06" },
+        ]);
+
+        const [query, setQuery] = useState("");
+
+        const filtered = tickets.filter(t =>
+            t.title.toLowerCase().includes(query.toLowerCase())
+        );
+
+        return html`
+        <div>
+          <div class="header">
+            <h1>All Tickets</h1>
+          </div>
+
+          <div class="search-bar">
+            <input
+              type="text"
+              placeholder="Search tickets..."
+              value=${query}
+              onInput=${e => setQuery(e.target.value)}
+            />
+          </div>
+
+          <div class="ticket-list">
+            ${filtered.map(t => html`
+              <div class="ticket">
+                <strong>${t.title}</strong><br/>
+                <small>Created: ${t.date}</small>
+              </div>
+            `)}
+          </div>
+        </div>
+      `;
+    }
+
+    const root = createRoot(document.getElementById("root"));
+    root.render(html`<${AllTickets} />`);
+</script>
+</body>
+</html>

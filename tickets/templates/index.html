@@ -1,0 +1,415 @@
+<!--<!DOCTYPE html>
+<html>
+<head>
+    <title>Gemini Chatbot with React & HTM</title>
+    <style>
+        /* Basic styling for the chat */
+        body { font-family: sans-serif; margin: 20px; background-color: #f4f7f6; }
+        .chatbot-container { max-width: 600px; margin: 0 auto; background-color: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: flex; flex-direction: column; height: 80vh; }
+        .chat-history { flex-grow: 1; overflow-y: auto; padding: 20px; border-bottom: 1px solid #eee; }
+        .message { margin-bottom: 15px; padding: 10px 15px; border-radius: 20px; max-width: 70%; line-height: 1.4; }
+        .user { background-color: #007bff; color: white; margin-left: auto; text-align: right; border-bottom-right-radius: 5px; }
+        .bot { background-color: #e2e8f0; color: #333; border-bottom-left-radius: 5px; }
+        .chat-input-area { padding: 15px; display: flex; gap: 10px; border-top: 1px solid #eee; }
+        .chat-input-area input { flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 20px; outline: none; }
+        .chat-input-area button { padding: 10px 20px; border: none; background-color: #28a745; color: white; border-radius: 20px; cursor: pointer; transition: background-color 0.3s; }
+        .chat-input-area button:hover:not(:disabled) { background-color: #218838; }
+        .chat-input-area button:disabled { background-color: #90ee90; cursor: not-allowed; }
+        .loading-indicator { font-style: italic; color: #6c757d; margin-top: 10px; }
+    </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="module">
+    import { useState, useEffect, createElement } from 'https://esm.sh/react';
+    import { createRoot } from 'https://esm.sh/react-dom/client';
+    // Using Axios for easy POST requests
+    import axios from 'https://esm.sh/axios';
+    import htm from 'https://unpkg.com/htm?module';
+    const html = htm.bind(createElement)
+
+    // Chatbot Component
+    function Chatbot() {
+        // State to hold the array of messages: [{ role: 'user'|'bot', text: '...' }]
+        const [messages, setMessages] = useState([]);
+        // State for the user's current input text
+        const [input, setInput] = useState('');
+        // State to manage loading/waiting for AI response
+        const [isLoading, setIsLoading] = useState(false);
+
+        // Function to send the message to the Django backend
+        const sendMessage = async () => {
+            if (!input.trim() || isLoading) return; // Prevent sending empty messages
+
+            const userMessage = input;
+            const newUserMessage = { role: 'user', text: userMessage };
+
+            // 1. Add user message to the display and clear input
+            setMessages(prev => [...prev, newUserMessage]);
+            setInput('');
+            setIsLoading(true);
+
+            try {
+                // 2. Call the Django API endpoint
+                const response = await axios.post('/api/chat/', {
+                    message: userMessage
+                });
+
+                // 3. Get the AI's reply from the response
+                const botReply = response.data.reply;
+                const newBotMessage = { role: 'bot', text: botReply };
+
+                // 4. Add the AI reply to the display
+                setMessages(prev => [...prev, newBotMessage]);
+
+            } catch (error) {
+                console.error("Error sending message to Django:", error);
+                const errorMessage = { role: 'bot', text: 'Sorry, I couldn\'t connect to the AI service.' };
+                setMessages(prev => [...prev, errorMessage]);
+            } finally {
+                // 5. Stop loading
+                setIsLoading(false);
+            }
+        };
+
+        // Scroll to the bottom of the chat history whenever messages change
+        useEffect(() => {
+            const historyDiv = document.querySelector('.chat-history');
+            if (historyDiv) {
+                historyDiv.scrollTop = historyDiv.scrollHeight;
+            }
+        }, [messages]);
+
+        return html`
+            <div class="chatbot-container">
+                <div class="chat-history">
+                    ${messages.map((msg, index) => html`
+                        <div key=${index} class=${'message ' + msg.role}>
+                            ${msg.text}
+                        </div>
+                    `)}
+                    ${isLoading && html`<div class="loading-indicator">Gemini is typing...</div>`}
+                </div>
+
+                <div class="chat-input-area">
+                    <input
+                        type="text"
+                        value=${input}
+                        onChange=${(e) => setInput(e.target.value)}
+                        onKeyPress=${(e) => e.key === 'Enter' && sendMessage()}
+                        placeholder=${isLoading ? "Waiting for response..." : "Ask me anything..."}
+                        disabled=${isLoading}
+                    />
+                    <button onClick=${sendMessage} disabled=${isLoading || !input.trim()}>
+                        Send
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    // Render the app
+    const root = createRoot(document.getElementById('root'));
+    root.render(html`<${Chatbot} />`);
+</script>
+</body>
+</html>-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Engineer Dashboard</title>
+    <style>
+
+
+        .model{
+            background: #cccccc;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background-color: white;
+        }
+
+        .header {
+            background: #003366;
+            color: white;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .ticket-list {
+            padding: 1rem;
+        }
+
+        .ticket {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1rem;
+            padding: 1rem;
+        }
+
+        .floating-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 2rem;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .chat-modal {
+            position: fixed;
+            bottom: 100px;
+            right: 20px;
+            background: white;
+            border-radius: 8px;
+            width: 300px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            display: none;
+            flex-direction: column;
+        }
+
+        .chat-modal.active {
+            display: flex;
+        }
+
+        .chat-header {
+            background: #007bff;
+            color: white;
+            padding: 0.5rem;
+            font-weight: bold;
+        }
+
+        .chat-body {
+            padding: 1rem;
+            flex-grow: 1;
+        }
+
+        .chat-input {
+            border: none;
+            border-top: 1px solid #ccc;
+            padding: 0.5rem;
+            width: calc(100% - 1rem);
+            outline: none;
+        }
+    </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="module">
+
+    const CHAT_API_URL = '/api/chat/';
+
+    import {useState, useEffect, createElement} from 'https://esm.sh/react';
+    import {createRoot} from 'https://esm.sh/react-dom/client';
+    // Using Axios for easy POST requests
+    import axios from 'https://esm.sh/axios';
+    import htm from 'https://unpkg.com/htm?module';
+
+    const html = htm.bind(createElement)
+
+    // Chatbot Component
+    function Chatbot() {
+        // State to hold the array of messages: [{ role: 'user'|'bot', text: '...' }]
+        const [messages, setMessages] = useState([]);
+        // const preset = {"role": "model", "parts": [{"text": "Hello! I'm ready to create a ticket for you. To get started, I need to know the **location**, **type** of issue, a **summary**, and the **priority**. What are the details?"}]};
+        // setMessages(prev => [...prev, preset]);
+        // State for the user's current input text
+        const [input, setInput] = useState('');
+        // State to manage loading/waiting for AI response
+        const [isLoading, setIsLoading] = useState(false);
+
+
+        // Function to send the message to the Django backend
+        const sendMessage = async () => {
+            if (!input.trim() || isLoading) return; // Prevent sending empty messages
+
+            const userMessage = input;
+            const newUserMessage = {"role": "user", "parts": [{"text": userMessage}]};
+
+
+            // 1. Add user message to the display and clear input
+            setMessages(prev => [...prev, newUserMessage]);
+            setInput('');
+            setIsLoading(true);
+
+            try {
+                // 2. Call the Django API endpoint
+                const response = await axios.post('/api/chat/', {
+                    message: userMessage,
+                    history: messages
+                });
+
+                // 3. Get the AI's reply from the response
+                const botReply = response.data.reply;
+                const newBotMessage = {"role": "model", "parts": [{"text": botReply}]};
+
+                // 4. Add the AI reply to the display
+                setMessages(prev => [...prev, newBotMessage]);
+
+
+            } catch (error) {
+                console.error("Error sending message to Django:", error);
+                const errorMessage = {"role": "model", "parts": [{"text": "Sorry, I couldn\'t connect to the AI service."}]};
+                setMessages(prev => [...prev, errorMessage]);
+            } finally {
+                // 5. Stop loading
+                setIsLoading(false);
+            }
+        };
+
+        // Scroll to the bottom of the chat history whenever messages change
+        useEffect(() => {
+            const historyDiv = document.querySelector('.chat-history');
+            if (historyDiv) {
+                historyDiv.scrollTop = historyDiv.scrollHeight;
+            }
+        }, [messages]);
+
+        return html`
+            <div class="chatbot-container">
+                <div class="chat-history">
+                    ${messages.map((msg, index) => html`
+                        <div key=${index} class=${'message ' + msg.role}>
+                            ${msg.parts[0].text}
+                        </div>
+                    `)}
+                    ${isLoading && html`
+                        <div class="loading-indicator">Gemini is typing...</div>`}
+                </div>
+
+                <div class="chat-input-area">
+                    <input
+                            type="text"
+                            value=${input}
+                            onChange=${(e) => setInput(e.target.value)}
+                            onKeyPress=${(e) => e.key === 'Enter' && sendMessage()}
+                            placeholder=${isLoading ? "Waiting for response..." : "Ask me anything..."}
+                            disabled=${isLoading}
+                    />
+                    <button onClick=${sendMessage} disabled=${isLoading || !input.trim()}>
+                        Send
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    // 🧩 Engineer Dashboard (also HTM syntax)
+    function EngineerDashboard() {
+        const [tickets] = useState([
+            {id: 1, title: "Server overload in Dallas DC", date: "2025-11-08"},
+            {id: 2, title: "Cooling system check Houston DC", date: "2025-11-07"},
+        ]);
+        const [chatOpen, setChatOpen] = useState(false);
+
+        return html`
+            <div>
+                <div class="header">
+                    <h1>Engineer Dashboard</h1>
+                    <p>Your Created Tickets</p>
+                </div>
+
+                <div class="ticket-list">
+                    ${tickets.map(t => html`
+                        <div class="ticket">
+                            <strong>${t.title}</strong><br/>
+                            <small>Created: ${t.date}</small>
+                        </div>
+                    `)}
+                </div>
+
+                <button class="floating-btn" onClick=${() => setChatOpen(!chatOpen)}>+</button>
+
+                <div class="chat-modal ${chatOpen ? 'active' : ''}">
+                    <div class="chat-header">New Ticket Assistant</div>
+                    ${chatOpen && html`
+                        <${Chatbot}/>`}
+
+                    <div id="chat"></div>
+                </div>
+            </div>
+        `;
+    }
+
+    const root = createRoot(document.getElementById('root'));
+    root.render(html`
+        <${EngineerDashboard}/>`);
+</script>
+
+</body>
+</html>
+
+
+<!--<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+<div id="root"></div>
+
+
+<script type="module">
+    import { useState, useEffect, createElement } from 'https://esm.sh/react';
+    import { createRoot } from 'https://esm.sh/react-dom/client';
+    import htm from 'https://unpkg.com/htm?module';
+    const html = htm.bind(createElement)
+
+    // Counter Component
+    function Counter() {
+        const [count, setCount] = useState(0);
+        const [isChanging, setIsChanging] = useState(false);
+
+        // Animation effect when count changes
+        useEffect(() => {
+            setIsChanging(true);
+            const timer = setTimeout(() => setIsChanging(false), 200);
+            return () => clearTimeout(timer);
+        }, [count]);
+
+        const increment = () => setCount(count + 1);
+        const decrement = () => setCount(count - 1);
+        const reset = () => setCount(0);
+
+        return html`
+            <div class="container">
+                <h1>Counter Demo</h1>
+
+                <div class="counter-display ${isChanging ? 'changing' : ''}">
+                    ${count}
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-decrement" onClick=${decrement}>
+                        − Decrement
+                    </button>
+                    <button class="btn-increment" onClick=${increment}>
+                        + Increment
+                    </button>
+                </div>
+
+                <button class="btn-reset" onClick=${reset}>
+                    ↻ Reset
+                </button>
+            </div>
+        `;
+    }
+
+    // Render the app
+    const root = createRoot(document.getElementById('root'));
+    root.render(html`<${Counter} />`);
+</script>
+</body>
+</html>-->
