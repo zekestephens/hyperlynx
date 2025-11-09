@@ -35,6 +35,9 @@
 
     const html = htm.bind(createElement);
 
+    const isEngineer = USER_ROLE === "engineer";
+    const isDataTech = USER_ROLE === "data_technician";
+
     function AllTickets() {
         const [tickets, setTickets] = useState({{ issues }});
         const [query, setQuery] = useState("");
@@ -50,15 +53,40 @@
 
             <div>
 
-                <div class="page-header d-flex justify-content-between align-items-center p-3 mb-0 bg-purple sticky-top w-100" id="top-bar">
-                    <!-- Left: Logo -->
-                    <div class="bg-logo"></div>
+                ${isEngineer && html`
+                    <div class="page-header d-flex justify-content-between align-items-center p-3 mb-0 bg-purple sticky-top w-100" id="top-bar">
+                        <!-- Left: Logo -->
+                        <div class="bg-logo"></div>
 
-                    <!-- Right: Link to All Tickets -->
-                    <a href="{% url 'dashboard' %}" class="btn btn-outline-light">
-                        My Tickets
-                    </a>
-                </div>
+                        <!-- Right: Link to All Tickets -->
+                        <a href="{% url 'logout' %}" class="btn btn-outline-light">
+                            logout
+                        </a>
+                        <a href="{% url 'all_tickets' %}" class="btn btn-outline-light">
+                            All Tickets
+                        </a>
+                    </div>
+
+                    <h1 class="page-header"></h1>
+                `}
+
+                ${isDataTech && html`
+                    <div class="page-header d-flex justify-content-between align-items-center p-3 mb-0 bg-blue sticky-top w-100" id="top-bar">
+                        <!-- Left: Logo -->
+                        <div class="bg-logo"></div>
+
+
+                        <a href="{% url 'logout' %}" class="btn btn-outline-light">
+                            logout
+                        </a>
+
+                        <!-- Right: Link to All Tickets -->
+                        <a href="{% url 'all_tickets' %}" class="btn btn-outline-light">
+                            All Tickets
+                        </a>
+                    </div>
+                    <h1 class="page-header"></h1>
+                `}
 
                 <h1 class="d-flex justify-content-center text-black">All Tasks</h1>
 

@@ -55,7 +55,7 @@ body {
 }
 
 
-.card-body{
+.card-body-sug{
     background-color: #AAA;
 }
 
@@ -64,10 +64,6 @@ body {
     flex-shrink: 0;
 }
 
-.tasks-container{
-    overflow-y: scroll;
-    height:50vh;
-}
 /*body {*/
 /*    padding-top: 80px; !* Adjust this based on the height of your top bar *!*/
 /*}*/

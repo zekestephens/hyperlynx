@@ -23,6 +23,20 @@ def index(request):
 def all_tickets(request):
     j = JiraClient(base_url=os.getenv("JIRA_URL"), token=os.getenv("JIRA_TOKEN"))
 
+    engineers = j.get_group_members("Engineers")
+    technicians = j.get_group_members("Technicians")
+
+    # Match Jira user by email
+    user = request.user.jira_username
+
+    # Determine role based on membership
+    if any(member.get("name") == user for member in engineers):
+        user_role = "engineer"
+    elif any(member.get("name") == user for member in technicians):
+        user_role = "data_technician"
+    else:
+        # Default fallback
+        user_role = "data_technician"
     issues = [
         {
             'id': issue['id'],
@@ -33,7 +47,11 @@ def all_tickets(request):
         } for issue in j.get_all_issues()
     ]
 
-    return render(request, "all_tickets.html", context=dict(issues=mark_safe(issues)))  # testing dashboard
+    return render(
+        request,
+        "all_tickets.html",
+        context={"issues": mark_safe(issues), "user_role": user_role}
+    )
 
 
 # def dashboard(request):
