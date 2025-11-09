@@ -4,8 +4,16 @@ from django.db.models import CASCADE
 
 
 # Create your models here.
-class Users(AbstractUser):
-    pass
+# class Users(AbstractUser):
+#     jira_username = models.CharField(
+#         max_length=150,
+#         unique=True,
+#         null=True,
+#         blank=True,
+#         help_text="Custom username set upon first login."
+#     )
+#
+#     pass
 
 # class Ticket(models.Model):
 #     id = models.IntegerField(default=0)

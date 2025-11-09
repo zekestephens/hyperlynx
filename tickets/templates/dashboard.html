@@ -1,3 +1,4 @@
+
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
@@ -10,9 +11,15 @@
           rel="stylesheet">
 
     <!-- Bootstrap CSS -->
+    <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css"
+    />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'tickets/css/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'tickets/css/gemini-modal.css' %}">
 </head>
+
 <body>
 <div id="root" class="container my-4"></div>
 
@@ -28,69 +35,38 @@
 
     const html = htm.bind(createElement);
 
-    function Chatbot() {
-        // State to hold the array of messages: [{ role: 'user'|'bot', text: '...' }]
+    function Chatbot({ messages=[], isLoading }) {
+        return html`
+            <div class="chatbot-container">
+                <div class="chat-history">
+                    ${messages.map((msg, index) => html`
+                        <div key=${index} class=${'message ' + msg.role}>
+                            <div class="rounded-3 message-text">${msg.parts[0].text}</div>
+                        </div>
+                    `)}
+                    ${isLoading && html`
+                        <div class="loading-indicator">Gemini is typing...</div>`}
+                </div>
+            </div>
+        `;
+    }
+    function ChatboxModal({ isChatOpen, setChatOpen }) {
+        // 1. CHAT LOGIC STATE
         const [messages, setMessages] = useState([]);
-        // State for the user's current input text
         const [input, setInput] = useState('');
-        // State to manage loading/waiting for AI response
         const [isLoading, setIsLoading] = useState(false);
+        let notDone = true;
 
+        // 2. INITIAL MESSAGE (Runs once when the component mounts)
         useEffect(() => {
             const preset = {
                 "role": "model",
                 "parts": [{"text": "Hello! I'm ready to create a ticket for you. To get started, I need to know the **location**, **type** of issue, a **summary**, and the **priority**. What are the details?"}]
             };
             setMessages([preset]);
-
         }, []);
 
-
-        // Function to send the message to the Django backend
-        const sendMessage = async () => {
-
-            if (!input.trim() || isLoading) return; // Prevent sending empty messages
-
-            const userMessage = input;
-            const newUserMessage = {"role": "user", "parts": [{"text": userMessage}]};
-
-
-            // 1. Add user message to the display and clear input
-            setMessages(prev => [...prev, newUserMessage]);
-            setInput('');
-            setIsLoading(true);
-
-            try {
-                // 2. Call the Django API endpoint
-                const response = await axios.post('/api/chat/', {
-                    message: userMessage,
-                    history: messages
-                });
-
-                // 3. Get the AI's reply from the response
-                const botReply = response.data.reply;
-                const newBotMessage = {"role": "model", "parts": [{"text": botReply}]};
-
-                // 4. Add the AI reply to the display
-                setMessages(prev => [...prev, newBotMessage]);
-
-
-            } catch (error) {
-                console.error("Error sending message to Django:", error);
-                const errorMessage = {
-                    "role": "model",
-                    "parts": [{"text": "Sorry, I couldn\'t connect to the AI service."}]
-                };
-                setMessages(prev => [...prev, errorMessage]);
-            } finally {
-                // 5. Stop loading
-                setIsLoading(false);
-            }
-
-
-        };
-
-        // Scroll to the bottom of the chat history whenever messages change
+        // 3. SCROLL LOGIC
         useEffect(() => {
             const historyDiv = document.querySelector('.chat-history');
             if (historyDiv) {
@@ -98,30 +74,79 @@
             }
         }, [messages]);
 
-        return html`
-            <div class="chatbot-container">
-                <div class="chat-history">
-                    ${messages.map((msg, index) => html`
-                        <div key=${index} class=${'message ' + msg.role}>
-                            ${msg.parts[0].text}
-                        </div>
-                    `)}
-                    ${isLoading && html`
-                        <div class="loading-indicator">Gemini is typing...</div>`}
-                </div>
+        // 4. SEND MESSAGE FUNCTION
+        const sendMessage = async () => {
+            if (!input.trim() || isLoading) return;
 
-                <div class="chat-input-area">
-                    <input
-                            type="text"
-                            value=${input}
-                            onChange=${(e) => setInput(e.target.value)}
-                            onKeyPress=${(e) => e.key === 'Enter' && sendMessage()}
-                            placeholder=${isLoading ? "Waiting for response..." : "Ask me anything..."}
-                            disabled=${isLoading}
-                    />
-                    <button onClick=${sendMessage} disabled=${isLoading || !input.trim()}>
-                        Send
-                    </button>
+            const userMessage = input;
+            const newUserMessage = {"role": "user", "parts": [{"text": userMessage}]};
+
+            setMessages(prev => [...prev, newUserMessage]);
+            setInput('');
+            setIsLoading(true);
+
+            try {
+                const response = await axios.post('/api/chat/', {
+                    message: userMessage,
+                    history: messages
+                });
+
+                const newBotMessage = {"role": "model", "parts": [{"text": response.data.reply}]};
+                setMessages(prev => [...prev, newBotMessage]);
+
+                if(response.data.isdone){
+                    // console.log("stop!");
+                    notDone=false;
+                }
+
+            } catch (error) {
+                console.error("Error sending message to Django:", error);
+                const errorMessage = {"role": "model", "parts": [{"text": "Sorry, I couldn\'t connect to the AI service."}]};
+                setMessages(prev => [...prev, errorMessage]);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        return html`
+            <div class="modal fade" id="chatModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+                 aria-labelledby="staticBackdropLabel" aria-hidden="true" xmlns="http://www.w3.org/1999/html">
+                <div class="modal-dialog modal-lg modal-fullscreen-sm-down modal-dialog-scrollable">
+                    <div class="modal-content">
+                        <div class="modal-header d-flex align-items-center">
+                            <h1 class="modal-title fs-5 d-flex align-items-center" id="staticBackdropLabel">
+                                <span class="btn-logo me-2"></span>
+                                Create New Ticket
+                            </h1>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+
+                        <div class="modal-body">
+                            <${Chatbot}
+                                    messages=${messages}
+                                    isLoading=${isLoading}
+                            />
+                        </div>
+
+                        <div class="modal-footer">
+                            <div class="chat-input-area">
+                            <textarea
+                                    type="text"
+                                    class="form-control"
+                                    value=${input}
+                                    onChange=${(e) => setInput(e.target.value)}
+                                    onKeyPress=${(e) => e.key === 'Enter' && sendMessage()}
+                                    placeholder=${isLoading ? "Waiting for response..." : "Ask me anything..."}
+                                    disabled=${isLoading}
+                            ></textarea>
+                                <span class="space-span"> </span>
+                                <button type="button" class="btn btn-primary" onClick=${sendMessage}
+                                        disabled=${notDone && (isLoading || !input.trim())}>
+                                    Send
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
@@ -131,45 +156,99 @@
         const [tickets] = useState([
             {id: 1, title: "Server overload in Dallas DC", date: "2025-11-08"},
             {id: 2, title: "Cooling system check Houston DC", date: "2025-11-07"},
+            {id: 1, title: "Server overload in Dallas DC", date: "2025-11-08"},
+            {id: 1, title: "Server overload in Dallas DC", date: "2025-11-08"},
+            {id: 1, title: "Server overload in Dallas DC", date: "2025-11-08"},
         ]);
         const [chatOpen, setChatOpen] = useState(false);
 
         const isEngineer = USER_ROLE === "engineer";
         const isDataTech = USER_ROLE === "data_technician";
 
+        const [query, setQuery] = useState("");
+
+        const filtered = tickets.filter(t =>
+            t.title.toLowerCase().includes(query.toLowerCase())
+        );
         return html`
-            <div>
-                <h1 class="mb-4">${isEngineer ? "Engineer Dashboard" : "Data Technician Dashboard"}</h1>
-
-                <div class="row mb-4">
-                    ${tickets.map(t => html`
-                        <div class="col-md-6 mb-3">
-                            <div class="card shadow-sm">
-                                <div class="card-body">
-                                    <h5 class="card-title">${t.title}</h5>
-                                    <p class="card-text"><small>Created: ${t.date}</small></p>
-                                </div>
-                            </div>
-                        </div>
-                    `)}
-                </div>
-
+            <div class = "big-container">
                 ${isEngineer && html`
-                    <button class="btn btn-primary floating-btn" onClick=${() => setChatOpen(!chatOpen)}>+</button>
-                    ${chatOpen && html`
-                        <${Chatbot}/>`}
+                    <div class="page-header d-flex justify-content-between align-items-center p-3 mb-0 bg-purple sticky-top w-100" id="top-bar">
+                        <!-- Left: Logo -->
+                        <div class="bg-logo"></div>
+
+                        <!-- Right: Link to All Tickets -->
+                        <a href="{% url 'all_tickets' %}" class="btn btn-outline-light">
+                            All Tickets
+                        </a>
+                    </div>
+
+                    <h1 class="d-flex justify-content-center text-black ">Created Tasks</h1>
                 `}
 
                 ${isDataTech && html`
-                    <div class="card p-3 shadow-sm">
-                        <h4>Suggested Tasks</h4>
-                        <ul>
-                            <li>Check network latency logs in Dallas DC</li>
-                            <li>Verify power efficiency in Houston DC</li>
-                            <li>Update rack maintenance schedule</li>
-                        </ul>
+                    <div class="page-header d-flex justify-content-between align-items-center p-3 mb-0 bg-purple sticky-top w-100" id="top-bar">
+                        <!-- Left: Logo -->
+                        <div class="bg-logo"></div>
+
+                        <!-- Right: Link to All Tickets -->
+                        <a href="{% url 'all_tickets' %}" class="btn btn-outline-light">
+                            All Tickets
+                        </a>
                     </div>
+                    <h1 class="d-flex justify-content-center text-black ">My Tasks</h1>
                 `}
+
+
+                <div class="page-content row mb-3 justify-content-center">
+                    <div class="col-9 mb-4 d-flex justify-content-center">
+                        <div class="input-group w-75">
+                            <input
+                                    type="text"
+                                    class="form-control"
+                                    placeholder="Search tickets..."
+                                    value=${query}
+                                    onInput=${e => setQuery(e.target.value)}
+
+                            />
+
+                        ${isEngineer && html`
+                            <button type="button" class="btn btn-logo" data-bs-toggle="modal"
+                                    data-bs-target="#chatModal" onClick=${() => setChatOpen(!chatOpen)}>+
+                            </button>
+                            <${ChatboxModal}
+                                    isChatOpen=${chatOpen}
+                                    setChatOpen=${setChatOpen}
+                            />
+
+                        `}
+                    </div>
+                </div>
+                <div class="tasks-container col-9 mb-2 justify-content-centerjustify-content-center">
+                    ${tickets.map(t => html`
+                    <div class=" mb-2 justify-content-centerjustify-content-center">
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <h5 class="card-title">${t.title}</h5>
+                                <p class="card-text"><small>Created: ${t.date}</small></p>
+                            </div>
+                        </div>
+                    </div>
+                `)}
+                </div>
+
+
+            </div>
+            ${isDataTech && html`
+                <div class="card p-3 shadow-sm">
+                    <h4>Suggested Tasks</h4>
+                    <ul>
+                        <li>Check network latency logs in Dallas DC</li>
+                        <li>Verify power efficiency in Houston DC</li>
+                        <li>Update rack maintenance schedule</li>
+                    </ul>
+                </div>
+            `}
             </div>
         `;
     }
@@ -180,7 +259,6 @@
 
 </script>
 
-<!-- Bootstrap JS (optional, for modals or components) -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
 </body>
 </html>

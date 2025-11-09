@@ -16,11 +16,13 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from users.views import logout_view
+from users import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+
     path('', include('tickets.urls')),
     path('', include('social_django.urls', namespace='social')),
-    path('logout/', logout_view, name='logout')
+    path('logout/', views.logout_view, name='logout'),
+    path('auth/first-login-prompt/', views.first_login, name='first_login_prompt')
 ]

@@ -1,0 +1,37 @@
+.chat-history {
+    display: flex;
+    flex-direction: column;
+}
+
+
+.message{
+    display: block;
+    margin: 5px 0px;
+}
+.message .message-text{
+    background-color: #007bff;
+    max-width: 80%;
+    padding: 10px;
+
+    color:white;
+
+}
+.chat-history .model {
+    align-self: flex-start;
+}
+.chat-history .user {
+    align-self: flex-end;
+}
+
+
+.modal-footer .chat-input-area{
+    display: flex;
+    width: 100%;
+    align-items: flex-end;
+    min-height: 40px;
+}
+.modal-footer textarea{
+    flex-grow: 1;
+    box-sizing: border-box;
+    height: 100%;
+}

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Your Profile</title>
+    <style>
+        /* Minimal styling for clarity */
+        body { font-family: sans-serif; margin: 50px; }
+        .container { max-width: 400px; margin: auto; padding: 20px; border: 1px solid #ccc; border-radius: 5px; }
+        .errorlist { color: red; list-style: none; padding: 0; }
+        .form-row { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"], input[type="submit"] { width: 100%; padding: 8px; box-sizing: border-box; }
+        input[type="submit"] { background-color: #007bff; color: white; border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Welcome! One More Step</h2>
+    <p>Please choose a unique username for your profile. This will be visible to others.</p>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="form-row">
+            {{ form.jira_username.label_tag }}
+            {{ form.jira_username }}
+
+            {% for error in form.jira_username.errors %}
+            <p class="errorlist">{{ error }}</p>
+            {% endfor %}
+        </div>
+
+        {% if form.non_field_errors %}
+        <ul class="errorlist">
+            {% for error in form.non_field_errors %}
+            <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        <input type="submit" value="Save Username and Continue">
+    </form>
+</div>
+</body>
+</html>

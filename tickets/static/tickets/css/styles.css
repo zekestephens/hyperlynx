@@ -1,13 +1,86 @@
-
+:root{
+    --hyperlink-purple: #a349a4;
+}
 .font-sans {
     font-family: "Work Sans", sans-serif;
 }
-
+body {
+    padding-top: 80px;
+}
 
 .bg-purple {
-    background-color: #a349a4 !important;
+    background-color: var(--hyperlink-purple) !important;
 }
+.bg-blue {
+    background-color: #0000FF !important;
+}
+#top-bar {
+    position: fixed;   /* sticks to the top */
+    top: 0;            /* aligns with the very top of the viewport */
+    left: 0;           /* start at left edge */
+    width: 100%;       /* full width */
+    z-index: 1030;     /* ensure it stays above content */
+}
+.bg-logo {
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-image: url('../images/hyperlynx-textfilledlogobackground.png');
+    width: 128px;
+    height: 38px;
+}
+
+.btn-logo {
+    background-image: url('../images/hyperlynxsimple-altfill.png'); /* Replace with your image path */
+    background-size: contain; /* or 'cover' or specific dimensions */
+    background-repeat: no-repeat;
+    background-position: center;
+    width: 35px; /* Adjust as needed */
+    height: 35px; /* Adjust as needed */
+    border: none; /* Remove default button border if desired */
+    /* Add any other styling like padding, border-radius, etc. */
+}
+
+.btn-logo:hover {
+    background-image: url('../images/hyperlynxsimple-whitebackbutbold.png');
+}
+
 
 .card {
     font-family: "Work Sans", sans-serif;
 }
+
+
+.space-span{
+    padding: 5px;
+    flex-shrink: 0;
+}
+
+.tasks-container{
+    overflow-y: scroll;
+    height:50vh;
+}
+/*body {*/
+/*    padding-top: 80px; !* Adjust this based on the height of your top bar *!*/
+/*}*/
+
+/*.floating-btn {*/
+/*    position: fixed;*/
+/*    bottom: 20px;*/
+/*    right: 20px;*/
+/*    width: 60px;*/
+/*    height: 60px;*/
+/*    border-radius: 50%;*/
+/*    font-size: 2rem;*/
+/*    box-shadow: 0 4px 6px rgba(0,0,0,0.2);*/
+/*}*/
+
+/*.chatbot-container {*/
+/*    max-width: 100%;*/
+/*    background-color: grey;*/
+/*}*/
+
+/*.chat-history {*/
+/*    height: 300px;*/
+/*    overflow-y: auto;*/
+/*}*/
